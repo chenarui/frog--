@@ -1,0 +1,157 @@
+package com.frog.controller.api.user;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.http.protocol.HTTP;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.connection.srp.SrpScriptReturnConverter;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.alibaba.fastjson.JSONObject;
+import com.frog.common.Constant;
+import com.frog.common.HttpClientUtils;
+import com.frog.common.HttpUtil;
+import com.frog.common.RedisCache;
+import com.frog.common.Result.ApiResult;
+import com.frog.common.Result.Code;
+import com.frog.common.Result.Msg;
+import com.frog.model.UserInfo;
+import com.frog.service.UserService;
+import com.gjs.utils.operate.Response;
+
+@Controller
+@RequestMapping("/api/user/security")
+public class UserController {
+	private Logger logger = LoggerFactory.getLogger(UserController.class);
+	@Autowired
+	private RedisCache RedisCache;
+	@Autowired
+	private UserService userService;
+/**
+ * 
+ * @param phone
+ * @param vCode
+ * @param user_id
+ * @param type 0小程序 1app
+ * @return
+ * @throws Exception
+ */
+	@RequestMapping("/codeLogin")
+	@ResponseBody
+	public ApiResult codeLogin(String phone, String vCode,Integer user_id,Integer type) throws Exception {
+		if (phone == null || vCode == null||type==null) {
+			logger.error("参数phone{}" + phone + "参数VCode" + vCode+"参数type{}"+type);
+			return new ApiResult(Code.MissParam, Msg.MissParam);
+		}
+		String code = RedisCache.getCache(phone);
+		if (code == null) {
+			logger.error("手机号" + phone + "验证码都过期了你还登陆啥");
+			return new ApiResult(2, "验证码已过期,请重新发送");
+		}
+		if (!code.equals(vCode)) {
+			return new ApiResult(2, "验证码不匹配,请重新输入");
+		}
+		/**
+		 * 小程序
+		 */
+		if (type==0) {
+			if (user_id==null) {
+				logger.error("参数user_id{}"+user_id);
+				return new ApiResult(Code.MissParam, Msg.MissParam);
+			}
+			UserInfo userInfo = userService.selectUserByUserId(user_id);
+			if (userInfo.getPhone() !=null) {
+				logger.info("用户ID{}"+user_id+",已经绑定手机了");
+			}else {
+				logger.info("用户ID{}"+user_id+",开始绑定手机");
+				userService.buildPhone(phone, user_id);
+			}
+			return new ApiResult();
+		}
+	//app登录
+		if (type==1) {
+			UserInfo info=userService.selectUserInfoByPhone(phone);
+			Map<String, Object> map = new HashMap<String, Object>();
+			map.put("userInfo", info);
+			ApiResult apiResult = new ApiResult();
+			apiResult.setResult(map);
+		}
+		
+		
+		
+		return new ApiResult();
+	}
+
+	/**
+	 * 小程序专用 微信公众号获取用户的基本信息授权登录 获取用户的基本信息
+	 * 
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping("/getUserInfo")
+	@ResponseBody
+	public Response wxUserInfo(String code) throws Exception {
+		// String
+		 
+		Map<String, String> map = new HashMap<String, String>();
+		map.put("appid", Constant.AppID);
+		map.put("secret", Constant.AppSecret);
+		map.put("js_code", code);
+		map.put("grant_type", "authorization_code");
+		String result = HttpUtil.get(Constant.wxUrl, map);
+		JSONObject jsonObject = JSONObject.parseObject(result);
+		String openid = (String) jsonObject.get("openid");
+		String sessionKey = (String) jsonObject.get("session_key");
+		JSONObject jsObject = new JSONObject();
+		jsObject.put("sessionKey", sessionKey);
+		jsObject.put("openid", openid);
+		return Response.success(jsObject);
+	}
+
+	/**
+	 * app 和小程序 统一过程 第三方注册接口 0 微信不授权登录 1 app端
+	 */
+	@RequestMapping("/thidRegisterLogin")
+	@ResponseBody
+	public ApiResult saveUserInfo(String openId, String pic_url, String nick_name, String sex,Integer type) {
+		if (openId == null || openId =="") {
+			logger.info("用户的openID{}" + openId);
+			return new ApiResult(Code.MissParam, Msg.MissParam);
+		}
+		//拉取用户基本信息
+		UserInfo info = userService.getUserInfoByOpenId(openId);
+		ApiResult apiResult = new ApiResult();
+		Map<String, Object> map = new HashMap<String, Object>();
+		if (info !=null) {
+				logger.info("用户的openId{}"+openId+"已经注册");
+				map.put("userInfo", info);
+				
+			
+		}
+		if (info==null) {
+			if (pic_url ==null || nick_name==null) {
+				logger.error("用户的头像呢{}"+pic_url+"用户的昵称呢{}"+nick_name);
+				return new ApiResult(Code.MissParam, "用户的头像和您称都没有");
+			}
+		
+			logger.info("用户第一次登陆时间"+System.currentTimeMillis()+",openId为{}"+openId);
+			UserInfo userInfo = new UserInfo();
+			userInfo.setAdd_time(new Date());
+			userInfo.setNick_name(nick_name);
+			userInfo.setPic_url(pic_url);
+			userInfo.setSex(sex);
+			userInfo.setOpen_id(openId);
+			userService.login(userInfo);
+			map.put("userInfo", userInfo);
+		}
+		apiResult.setResult(map);
+		return apiResult;
+
+	}
+}

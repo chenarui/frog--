@@ -1,0 +1,103 @@
+package com.frog.serviceImpl;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.frog.common.Result.ApiResult;
+import com.frog.dao.UserInfoMapper;
+import com.frog.model.UserInfo;
+import com.frog.service.UserService;
+
+
+@Transactional(readOnly = true)
+public class UserServiceImpl  implements UserService {
+@Autowired
+private UserInfoMapper userInfoMapper;
+	@Override
+	public List<UserInfo> list(Integer page, Integer pageSize, Map<String, Object> params) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public long count(Map<String, Object> params) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public UserInfo viewById(int id) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean delete(int id) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	@Transactional(readOnly=false)
+	public UserInfo save(UserInfo t) {
+		userInfoMapper.insert(t);
+		return t;
+	}
+
+	@Override
+	public boolean update(UserInfo t) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public String getFilePath(Integer fileid) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public UserInfo selectUserInfoByPhone(String phone) {
+		
+		return userInfoMapper.getUserInfoByPhone(phone);
+	}
+
+	@Override
+	@Transactional(readOnly=false)
+	public int login(UserInfo userInfo) {
+		
+		return userInfoMapper.insert(userInfo);
+	}
+
+	@Override
+	public UserInfo getUserInfoByOpenId(String openId) {
+		return userInfoMapper.selectUserInfoByOpenId(openId);
+	}
+
+	@Override
+	@Transactional(readOnly = false)
+	public int updateBalance(BigDecimal balance,Integer user_id) {
+		return userInfoMapper.updateBalance(balance,user_id);
+	}
+
+	@Override
+	public UserInfo selectUserByUserId(Integer user_id) {
+		return userInfoMapper.selectUserByUserId(user_id);
+	}
+
+	@Override
+	@Transactional(readOnly=false)
+	public int buildPhone(String phone, Integer user_id) {
+		return userInfoMapper.updateUserInfoByUserId(phone, user_id);
+	}
+
+
+
+	
+
+
+}

@@ -1,0 +1,113 @@
+package com.frog.model;
+
+import java.io.Serializable;
+import java.util.Date;
+
+public class FrogTake implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	private Integer take_id;
+
+	private Integer task_id;
+
+	private Integer user_id;
+
+	private Short status;
+	
+	private Date add_time;
+	
+	private Date complete_time;
+	
+	private Date give_up_time;
+	
+	private Integer foot_step_end;
+	
+	private Integer foot_step_start;
+	
+	private Date hand_task_time;
+
+	public Integer getTake_id() {
+		return take_id;
+	}
+
+	public void setTake_id(Integer take_id) {
+		this.take_id = take_id;
+	}
+
+	public Integer getTask_id() {
+		return task_id;
+	}
+
+	public void setTask_id(Integer task_id) {
+		this.task_id = task_id;
+	}
+
+	public Integer getUser_id() {
+		return user_id;
+	}
+
+	public void setUser_id(Integer user_id) {
+		this.user_id = user_id;
+	}
+
+	public Short getStatus() {
+		return status;
+	}
+
+	public void setStatus(Short status) {
+		this.status = status;
+	}
+
+	public Date getAdd_time() {
+		return add_time;
+	}
+
+	public void setAdd_time(Date add_time) {
+		this.add_time = add_time;
+	}
+
+	public Date getComplete_time() {
+		return complete_time;
+	}
+
+	public void setComplete_time(Date complete_time) {
+		this.complete_time = complete_time;
+	}
+
+	public Date getGive_up_time() {
+		return give_up_time;
+	}
+
+	public void setGive_up_time(Date give_up_time) {
+		this.give_up_time = give_up_time;
+	}
+
+	public Integer getFoot_step_end() {
+		return foot_step_end;
+	}
+
+	public void setFoot_step_end(Integer foot_step_end) {
+		this.foot_step_end = foot_step_end;
+	}
+
+	public Integer getFoot_step_start() {
+		return foot_step_start;
+	}
+
+	public void setFoot_step_start(Integer foot_step_start) {
+		this.foot_step_start = foot_step_start;
+	}
+
+	public Date getHand_task_time() {
+		return hand_task_time;
+	}
+
+	public void setHand_task_time(Date hand_task_time) {
+		this.hand_task_time = hand_task_time;
+	}
+
+}

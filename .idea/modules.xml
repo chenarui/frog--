@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/frog.iml" filepath="$PROJECT_DIR$/frog.iml" />
+      <module fileurl="file://$PROJECT_DIR$/frog-api/frog-api.iml" filepath="$PROJECT_DIR$/frog-api/frog-api.iml" />
+      <module fileurl="file://$PROJECT_DIR$/frog-provider/frog-provider.iml" filepath="$PROJECT_DIR$/frog-provider/frog-provider.iml" />
+      <module fileurl="file://$PROJECT_DIR$/frog-web/frog-web.iml" filepath="$PROJECT_DIR$/frog-web/frog-web.iml" />
+    </modules>
+  </component>
+</project>

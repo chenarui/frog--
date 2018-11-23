@@ -1,0 +1,21 @@
+package com.frog.serviceImpl;
+
+import java.util.Random;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.frog.common.CommonUtils;
+import com.frog.common.Constant;
+import com.frog.common.sms.RLYSmsUtils;
+import com.frog.service.CommonService;
+
+public class CommonServiceImpl implements CommonService {
+	private Logger logger =LoggerFactory.getLogger(CommonServiceImpl.class);
+	@Override
+	public int sendConde(String phone,String code) {
+		logger.info("开始发送验证码");
+		return	RLYSmsUtils.SendSms(phone, Constant.SMS_FROG_LUCKY_CODE_MESSAGE_ID, new String[]{code,Constant.SMS_CODE_DATE});
+	}
+
+}

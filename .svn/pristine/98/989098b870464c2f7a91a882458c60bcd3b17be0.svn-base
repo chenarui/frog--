@@ -1,0 +1,7 @@
+package com.frog.service;
+
+public interface CommonService {
+	
+public int sendConde(String phone,String code);
+
+}

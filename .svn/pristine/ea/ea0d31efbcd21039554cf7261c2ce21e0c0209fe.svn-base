@@ -1,0 +1,22 @@
+package com.frog.service;
+
+import java.util.List;
+
+import com.frog.common.Result.ApiResult;
+import com.frog.model.FrogTake;
+import com.frog.model.FrogTask;
+
+public interface TaskService extends BaseService<FrogTask> {
+	
+  public List<FrogTask> getTask();
+  
+  
+  public ApiResult allTaskInfo();
+  
+  public List<FrogTask> myTask(Integer user_id,Integer page,Integer type);
+  
+  
+  public int operateTakeTask(Integer take_id,Integer type);
+  
+  public FrogTake selectTakeByTakeId(Integer take_id);
+}

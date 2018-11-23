@@ -1,0 +1,251 @@
+package com.frog.controller.api.user;
+
+import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.frog.common.CommonUtils;
+import com.frog.common.Constant;
+import com.frog.common.DateUtils;
+import com.frog.common.RedisCache;
+import com.frog.common.Result.ApiResult;
+import com.frog.common.Result.Code;
+import com.frog.common.Result.Msg;
+import com.frog.model.FrogTake;
+import com.frog.model.FrogTask;
+import com.frog.model.UserInfo;
+import com.frog.service.TaskService;
+import com.frog.service.TaskTakeService;
+import com.frog.service.UserService;
+
+@Controller
+@RequestMapping("/api/user/task")
+public class TaskController {
+	
+	private Logger   logger   =  LoggerFactory.getLogger(TaskController.class);
+	@Autowired
+	private ApplicationContext applicationContext;
+	@Autowired
+	private TaskService taskService;
+	@Autowired
+	private RedisCache redisCache;
+	@Autowired
+	private TaskTakeService taskTakeService;
+	@Autowired	
+	private UserService userService;
+	/**
+	 * 
+	 * @param user_id
+	 * @param type
+	 *            0扫码 1 所有任务 2刷新 3 扫码连接
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping("/getTask")
+	@ResponseBody
+	public ApiResult getTask(Integer user_id, Integer type,  Integer footStep,long beginTime,Integer take_id) throws Exception {
+		if (user_id == null) {
+			return new ApiResult(Code.MissParam, Msg.MissParam);
+		}
+		UserInfo userInfo =userService.selectUserByUserId(user_id);
+		if (userInfo ==null) {
+			logger.error("没有这个人。。。。。。");
+			return new ApiResult(5, "暂无此人");
+		}
+		//完成后交任务  
+		if (userInfo.getPhone()==null) {
+			return new ApiResult(6, "无法进行扫码操作");
+		}
+		//扫码完成任务
+		if (type==3) {
+			double wa_coin=0;
+			if (footStep ==null || beginTime==0||footStep==0 ) {
+				logger.error("用户{}"+user_id+"运动步数为{}"+footStep+"...");
+				return new ApiResult(Code.MissParam, Msg.MissParam);
+			}
+			//时间(开始时间 大于结束时间要大于三分钟才给哇币 结束时间 )
+			long endTime= System.currentTimeMillis();
+			double diffMinute=(endTime-beginTime)/1000 * 60;
+			if (diffMinute <3) {
+				logger.info("用户"+String.valueOf(user_id)+",由于完成时间小于三分钟,暂未户获取到哇币");
+				taskService.operateTakeTask(take_id, 2);
+				return new ApiResult(1,"由于您本次的完成时间小于系统预测时间,所以您暂未获取哇币");
+			}
+//  判断步数 每步大概 70cm
+			double distance=footStep*0.7;
+			//每满一千步给一个哇币 最多给3
+			double waCoin=distance/1000;
+			if (waCoin>= Constant.most_wa_coin) {
+				wa_coin=Constant.most_wa_coin;
+			}else {
+				wa_coin=waCoin;
+			}
+			//小数后面的都进1
+			logger.info("用户ID"+String.valueOf(user_id)+"或得了"+CommonUtils.changeDoubleToInt(wa_coin)+"个哇币");
+		//完成任务
+			taskService.operateTakeTask(take_id, 2);
+			BigDecimal big=new BigDecimal(CommonUtils.changeDoubleToInt(wa_coin));
+			BigDecimal balance =userInfo.getBalance().add(big);
+			int result =userService.updateBalance(balance,userInfo.getUser_id());
+			if(result!=1){
+				return new ApiResult(7,"蛙币送出失败");
+			}
+			return new ApiResult(1,"送出蛙币成功");
+		}
+		ApiResult apiResult = new ApiResult();
+		Map<String, Object> map = new HashMap<String, Object>();
+		if (type==2) {
+			logger.info("用户Id{}"+user_id+"正在刷新任务");
+			List<FrogTask> list = taskService.getTask();
+			if (list.equals(null)) {
+				return new ApiResult(2, "暂无题目");
+			}
+			map.put("task", list);
+		apiResult.setResult(map);
+		return apiResult;
+		}
+		//判断今天是不是已经扫过码 
+		String key=getDayKey(user_id);
+		String dayCount= redisCache.getHashKey(key, hashKey());
+		if (redisCache.isExist(key)==false) {
+		
+			redisCache.addHashKey(key, hashKey(), "0");
+		}else {
+			if (Integer.valueOf(dayCount)>Constant.USER_SCAN_COUNT) {
+				return new ApiResult(3, "您今日扫码次数已经超过上限,请明天再来");
+			}
+		}
+		//查看进行中的任务
+		int taskTakeCount=taskTakeService.takeTaskCount(user_id, 0);
+		if (taskTakeCount >0) {
+			return new ApiResult(4, "您还有进行中的任务，不行进行扫码，请完成后进行扫码");
+		}
+	
+		if (type == 0) {
+			logger.info("用户Id{}"+user_id+"正在扫码");
+			List<FrogTask> list = taskService.getTask();
+			if (list.equals(null)) {
+				return new ApiResult(2, "暂无题目");
+			}
+			map.put("task", list);
+			redisCache.addHashKey(key, hashKey(), String.valueOf(Integer.valueOf(dayCount)+1));
+		}
+		if (type == 1) {
+			logger.info("用户Id{}"+user_id+"正在察看所有任务");
+			return taskService.allTaskInfo();
+		}
+		
+		apiResult.setResult(map);
+		return apiResult;
+	}
+
+	/**
+	 * 开始任务 生成不重复的四位数 根据用户的ID 自定义一个规则 制定一个
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/taskStart")
+	@ResponseBody
+
+	public ApiResult startTask(Integer user_id, Integer task_id, Integer type) {
+		if (user_id == null || task_id == null) {
+			return new ApiResult(Code.MissParam, Msg.MissParam);
+		}
+		int take_id = taskTakeService.save(user_id, task_id);
+		ApiResult apiResult = new ApiResult();
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("take_id", take_id);
+		apiResult.setResult(map);
+		return apiResult;
+	}
+
+	/**
+	 * 
+	 * @param user_id
+	 * @param page
+	 * @return
+	 */
+	@RequestMapping("allMyTask")
+	@ResponseBody
+	public ApiResult getAllMyTask(Integer user_id, Integer page, Integer status) {
+		if (user_id == null || status == null) {
+			return new ApiResult(2, "参数为空");
+		}
+		if (page == null||page<=0) {
+			page = 1;
+		}
+		List<FrogTask> myTaskList = taskService.myTask(user_id, page, status);
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("myTaskList", myTaskList);
+		if ( myTaskList.size()==0) {
+			map.put("haveMore", 0);
+		} else {
+			map.put("haveMore", 1);
+		}
+		ApiResult apiResult = new ApiResult();
+		apiResult.setResult(map);
+		return apiResult;
+	}
+	/**
+	 * 
+	 * @param userId
+	 * @param type 1取消  2 完成
+	 * @param footStep
+	 * @param beginTime
+	 * @param user_id
+	 * @return
+	 */
+	@RequestMapping("/taskOperate")
+	@ResponseBody
+	public ApiResult completeTask(Integer take_id, Integer type,Integer user_id ) {
+		if (take_id == null || type == null) {
+			return new ApiResult(Code.MissParam, Msg.MissParam);
+		}
+		//取消
+		FrogTake frogTake=taskTakeService.getTakeInfo(take_id);
+		if (frogTake==null) {
+			return new ApiResult(2, "这个任务不存在");
+		}
+		String message="";
+		if (type == 1) {
+			message="任务取消任务成功";
+		}
+		//完成
+		if (type == 2) {
+			message="任务完成成功";
+			}
+		taskService.operateTakeTask(take_id, type);
+		return new ApiResult(1, message);
+	}
+	
+	public String getDayKey(Integer user_id){
+		StringBuffer buffer = new StringBuffer();
+		buffer.append(String.valueOf(user_id));
+		buffer.append(Constant.USER_DAY_COUNT_KEY);
+		SimpleDateFormat dateFormat=new SimpleDateFormat("yyyy-MM-dd");
+		buffer.append(dateFormat.format(new java.util.Date()));
+		return buffer.toString();
+	}
+	public String hashKey(){
+		StringBuffer buffer= new StringBuffer();
+		buffer.append(Constant.USER_DAY_COUNT_KEY);
+		SimpleDateFormat dateFormat=new SimpleDateFormat("yyyy-MM-dd");
+		buffer.append(dateFormat.format(new java.util.Date()));
+		return buffer.toString();
+		
+	}
+	public static void main(String[] args) {
+		System.out.println(1555/1000);
+	}
+}

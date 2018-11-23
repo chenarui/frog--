@@ -1,0 +1,21 @@
+package com.frog.dao;
+
+import java.util.Map;
+
+import org.apache.ibatis.annotations.Param;
+
+import com.frog.model.FrogTake;
+
+public interface TakeTaskInfoMapper extends BaseMapper<FrogTake> {
+	public int insert(@Param("frogTake") FrogTake frogTake,@Param("take_id")Integer take_id);
+	
+	public int operateTakeTask(@Param("status")short status,@Param("type")Integer type,@Param("take_id")Integer take_id);
+
+	public FrogTake selectTakeByTakeId(@Param("take_id")Integer take_id);
+	
+	int selectNoCompleteTask(Map<String, Object> map);
+	
+	void handTask(FrogTake frogTake);
+	
+	FrogTake selectTakeInfoBytakeId(@Param("take_id")Integer take_id);
+}

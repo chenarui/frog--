@@ -1,0 +1,55 @@
+package com.frog.serviceImpl;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.frog.dao.TakeTaskInfoMapper;
+import com.frog.model.FrogTake;
+import com.frog.service.TaskTakeService;
+
+@Transactional(readOnly = true)
+public class TaskTakeServiceImpl implements TaskTakeService {
+	@Autowired
+	private TakeTaskInfoMapper takeTaskInfoMapper;
+
+	@Override
+	@Transactional(readOnly = false)
+	public int save(Integer user_id, Integer task_id ) {
+		FrogTake frogTake = new FrogTake();
+		frogTake.setUser_id(user_id);
+		frogTake.setTask_id(task_id);
+		frogTake.setAdd_time(new Date());
+		frogTake.setStatus((short) 0);
+		takeTaskInfoMapper.insert(frogTake);
+		return frogTake.getTake_id();
+	}
+
+	@Override
+	public int takeTaskCount(Integer user_id, Integer status) {
+	Map<String, Object> map= new HashMap<String, Object>();
+	map.put("user_id", user_id);
+	map.put("status", status);
+		return takeTaskInfoMapper.selectNoCompleteTask(map);
+	}
+
+	@Override
+	@Transactional(readOnly=false)
+	public void handTask(Integer user_id, Integer foot_step_end) {
+		FrogTake frogTake= new FrogTake();
+		frogTake.setUser_id(user_id);
+		frogTake.setFoot_step_end(foot_step_end);
+	    takeTaskInfoMapper.handTask(frogTake);
+		
+	}
+
+	@Override
+	public FrogTake getTakeInfo(Integer take_id) {
+		
+		return takeTaskInfoMapper.selectTakeByTakeId(take_id);
+	}
+  
+}

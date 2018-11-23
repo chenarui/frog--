@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.frog.dao.TaskInfoMapper">
+	<resultMap id="BaseResultMap" type="com.frog.model.FrogTask">
+		<id column="task_id" jdbcType="INTEGER" property="task_id" />
+		<result column="task_pic_id" jdbcType="VARCHAR" property="task_pic_id" />
+		<result column="task_info" jdbcType="VARCHAR" property="task_info" />
+		<result column="del" jdbcType="BIT" property="del" />
+		<result column="modify_time" jdbcType="TIMESTAMP" property="modify_time" />
+		<result column="add_time" jdbcType="TIMESTAMP" property="add_time" />
+		<result column="longitude" jdbcType="DOUBLE" property="longitude" />
+		<result column="latitude" jdbcType="DOUBLE" property="latitude" />
+	</resultMap>
+	<sql id="Base_Column_List">
+		task_id,task_pic_id,task_info,del,modify_time,add_time,longitude,latitude
+	</sql>
+	<select id="allTaskInfo" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from frog_task where del=false
+		order by add_time desc
+	</select>
+	<select id="selectAllTaskInfo" parameterType="com.frog.model.FrogTask"
+		resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from frog_task where frog_task.task_id in (select frog_take.task_id
+		from frog_take where frog_take.user_id=#{user_id}
+		<if test="status !=null">
+			and frog_take.status=#{status}
+		</if>
+		order by frog_take.add_time desc)
+		limit #{page},5
+	</select>
+</mapper>

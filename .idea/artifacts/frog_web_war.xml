@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="war" name="frog-web:war">
+    <output-path>$PROJECT_DIR$/frog-web/target</output-path>
+    <root id="archive" name="frog-web.war">
+      <element id="artifact" artifact-name="frog-web:war exploded" />
+    </root>
+  </artifact>
+</component>

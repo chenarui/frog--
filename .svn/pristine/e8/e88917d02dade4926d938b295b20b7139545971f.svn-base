@@ -1,0 +1,16 @@
+package com.frog.service;
+
+import com.frog.model.FrogTake;
+
+public interface TaskTakeService {
+	
+public int save(Integer user_id, Integer task_id );
+
+//根据任务状态查找任务数量
+public int takeTaskCount(Integer user_id,Integer status);
+
+public void handTask(Integer user_id,Integer foot_step_end);
+
+FrogTake getTakeInfo(Integer take_id);
+
+}

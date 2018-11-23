@@ -1,0 +1,99 @@
+package com.frog.model;
+
+import java.io.Serializable;
+import java.util.Date;
+
+public class FrogTask implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
+  private Integer task_id;
+
+	private String task_pic_id;
+	
+
+	private String task_info;
+
+	private boolean del;
+	
+	private Date add_time;
+	
+	private Date modify_time;
+	
+	private Double latitude;
+	
+	private Double longitude;
+	
+
+	
+	public Integer getTask_id() {
+		return task_id;
+	}
+
+	public void setTask_id(Integer task_id) {
+		this.task_id = task_id;
+	}
+
+	
+	public String getTask_pic_id() {
+		return task_pic_id;
+	}
+
+	public void setTask_pic_id(String task_pic_id) {
+		this.task_pic_id = task_pic_id;
+	}
+
+	public String getTask_info() {
+		return task_info;
+	}
+
+	public void setTask_info(String task_info) {
+		this.task_info = task_info;
+	}
+
+	public boolean isDel() {
+		return del;
+	}
+
+	public void setDel(boolean del) {
+		this.del = del;
+	}
+
+	public Date getAdd_time() {
+		return add_time;
+	}
+
+	public void setAdd_time(Date add_time) {
+		this.add_time = add_time;
+	}
+
+	public Date getModify_time() {
+		return modify_time;
+	}
+
+	public void setModify_time(Date modify_time) {
+		this.modify_time = modify_time;
+	}
+
+	public Double getLatitude() {
+		return latitude;
+	}
+
+	public void setLatitude(Double latitude) {
+		this.latitude = latitude;
+	}
+
+	public Double getLongitude() {
+		return longitude;
+	}
+
+	public void setLongitude(Double longitude) {
+		this.longitude = longitude;
+	}
+
+
+	
+}
